@@ -1,32 +1,41 @@
-from .const import PWR_CHARACTERISTIC, IDENTIFY_CHARACTERISTIC, PWR_ON, PWR_STANDBY
-from bleak import BleakClient
+from .const import (
+    PWR_CHARACTERISTIC,
+    IDENTIFY_CHARACTERISTIC,
+    PWR_ON,
+    PWR_STANDBY,
+    SERVICE,
+)
+from bluepy.btle import Peripheral, ADDR_TYPE_RANDOM
 
 
 class BasestationDevice:
     def __init__(self, mac):
         self.mac = mac
-        self.client = None
 
-    async def connect(self):
-        self.client = BleakClient(self.mac)
-        await self.client.connect()
+    def connect(self):
+        self.client = Peripheral()
+        self.client.connect(self.mac, ADDR_TYPE_RANDOM)
+        self.service = self.client.getServiceByUUID(SERVICE)
 
-    async def disconnect(self):
-        await self.client.disconnect()
+    def disconnect(self):
+        self.client.disconnect()
 
-    async def is_turned_on(self):
-        pwr = await self.client.read_gatt_char(PWR_CHARACTERISTIC)
-        return pwr[0] is not PWR_STANDBY[0]
+    def is_turned_on(self):
+        char = self.service.getCharacteristics(PWR_CHARACTERISTIC)[0]
+        pwr = char.read()
+        return pwr != PWR_STANDBY
 
-    async def turn_on(self):
-        return await self.client.write_gatt_char(PWR_CHARACTERISTIC, PWR_ON)
+    def turn_on(self):
+        char = self.service.getCharacteristics(PWR_CHARACTERISTIC)[0]
+        return char.write(PWR_ON, True)
 
-    async def turn_off(self):
-        return await self.client.write_gatt_char(PWR_CHARACTERISTIC, PWR_STANDBY)
+    def turn_off(self):
+        char = self.service.getCharacteristics(PWR_CHARACTERISTIC)[0]
+        return char.write(PWR_STANDBY, True)
 
-    async def identify(self):
-        return await self.client.write_gatt_char(
-            IDENTIFY_CHARACTERISTIC,
+    def identify(self):
+        char = self.service.getCharacteristics(IDENTIFY_CHARACTERISTIC)[0]
+        return char.write(
             # any byte will do really, which is why it's not in consts.py
-            bytearray([0x01]),
+            b"\x01"
         )

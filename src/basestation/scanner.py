@@ -1,7 +1,8 @@
 import argparse
 import logging
 import sys
-from bleak import BleakScanner
+from bluepy.btle import Scanner
+
 from .device import BasestationDevice
 from .const import NAME_SUFFIX
 
@@ -9,11 +10,14 @@ _logger = logging.getLogger(__name__)
 
 
 class BasestationScanner:
-    async def discover():
+    def discover():
         devices = []
-        for d in await BleakScanner.discover():
-            if d.name.startswith(NAME_SUFFIX):
+        scanner = Scanner()
+        for d in scanner.scan():
+            name = d.getValueText(9)
+
+            if name is not None and name.startswith(NAME_SUFFIX):
                 # TODO: should probably also check for existence of service
-                devices.append(BasestationDevice(d.address))
+                devices.append(BasestationDevice(d.addr))
 
         return devices

@@ -1,37 +1,44 @@
 import pytest
-from asyncio import sleep
+from time import sleep
 
 from basestation.scanner import BasestationScanner
 
 """
-It should be kinda obvious, but just FYI, these tests need to be run near actual hardware for them to succeed.
-
-TODO: would love to split this up into multiple tests, but that causes the event loop to get closed or something.
-I don't know (aka, don't wanna know) too much about asyncio.
+It should be kinda obvious, but just FYI, these tests need to be ran near actual hardware for them to succeed.
 """
 
+dev = None
 
-@pytest.mark.asyncio
-async def test_pwr():
-    devices = await BasestationScanner.discover()
+
+def test_scan():
+    global dev
+    devices = BasestationScanner.discover()
     assert len(devices) > 0
     dev = devices[0]
 
-    try:
-        await dev.connect()
 
-        await dev.identify()
+def test_connect():
+    dev.connect()
 
-        print(
-            "\n\nYou should now check if your device flashes 😂. we can't read this state to confirm it is.\n\n"
-        )
 
-        await sleep(5)
+def test_identify():
+    dev.identify()
+    print(
+        "\n\nYou should now check if your device flashes 😂. we can't read this state to confirm it is.\n\n"
+    )
 
-        await dev.turn_on()
-        assert await dev.is_turned_on() is True
+    sleep(5)
 
-        await dev.turn_off()
-        assert await dev.is_turned_on() is False
-    finally:
-        await dev.disconnect()
+
+def test_turn_on():
+    dev.turn_on()
+    assert dev.is_turned_on() is True
+
+
+def test_turn_off():
+    dev.turn_off()
+    assert dev.is_turned_on() is False
+
+
+def test_disconnect():
+    dev.disconnect()
