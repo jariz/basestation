@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 
 
 class BasestationScanner:
-    def discover():
+    def discover(self):
         devices = []
         scanner = Scanner()
         for d in scanner.scan():
